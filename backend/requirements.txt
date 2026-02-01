@@ -4,3 +4,7 @@ pydantic
 python-multipart
 pdfplumber
 camelot-py
+pytesseract
+pdf2image
+Pillow
+
