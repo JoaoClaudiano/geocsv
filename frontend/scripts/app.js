@@ -98,5 +98,29 @@ async function uploadPDF() {
     JSON.stringify(data.text_preview.pages.slice(0, 2), null, 2);
 }
 
+async function applyOcrSuggestion() {
+  if (!window.lastPdfText) {
+    alert("Nenhum PDF OCR carregado");
+    return;
+  }
+
+  const response = await postData("/suggest/from-ocr", window.lastPdfText);
+
+  response.suggested_layers.forEach(layer => {
+    addGeologyRow();
+    const row = document.querySelector(
+      "#geology-table tbody tr:last-child"
+    );
+    const inputs = row.querySelectorAll("input, select");
+
+    inputs[0].value = layer.location_id;
+    inputs[1].value = layer.depth_top;
+    inputs[2].value = layer.depth_base;
+    inputs[4].value = layer.description;
+  });
+}
+
+window.lastPdfText = data.text_preview;
+
 
 
