@@ -1,71 +1,193 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Geo CSV Bridge</title>
-  <link rel="stylesheet" href="styles/main.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoCSV Bridge — Civil 3D</title>
+  <link rel="stylesheet" href="style/main.css">
+  <style>
+    /* Header e Footer */
+    header, footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #f3f3f3;
+      margin-bottom: 1rem;
+    }
+    footer {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 2rem;
+    }
+
+    /* Dark mode */
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: #f3f3f3;
+    }
+    body.dark-mode table th {
+      background-color: #333;
+    }
+    body.dark-mode table td, body.dark-mode table th {
+      border-color: #555;
+    }
+    body.dark-mode input {
+      background-color: #2e2e2e;
+      color: #f3f3f3;
+    }
+    body.dark-mode button {
+      background-color: #555;
+      color: #f3f3f3;
+      border: none;
+    }
+
+    /* Botões principais */
+    .btn {
+      margin: 0.5rem 0.5rem 1rem 0;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background-color: #f3f3f3;
+      transition: 0.2s;
+    }
+    .btn:hover {
+      background-color: #ddd;
+    }
+
+    /* Output JSON */
+    #output {
+      white-space: pre-wrap;
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 1rem;
+    }
+
+    /* Dark mode toggle */
+    #dark-mode-toggle {
+      float: right;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    h2 {
+      margin-top: 2rem;
+    }
+
+  </style>
 </head>
 <body>
 
-  <h1>Geo CSV Bridge</h1>
-  <p>Inserção manual de dados geotécnicos (Civil 3D)</p>
+  <header>
+    <h1>GeoCSV Bridge</h1>
+    <p>Converter PDFs geotécnicos para CSV compatível com Civil 3D</p>
+    <button id="dark-mode-toggle">Dark Mode</button>
+  </header>
 
+  <!-- Seção PDF Upload -->
   <section>
-  <h2>Upload de Relatório Geotécnico (PDF)</h2>
-  <input type="file" id="pdf-input" accept="application/pdf" />
-  <button onclick="uploadPDF()">📄 Enviar PDF</button>
-</section>
+    <h2>Upload de PDF</h2>
+    <input type="file" id="pdf-input" accept="application/pdf">
+    <button class="btn" onclick="uploadPDF()">Enviar PDF</button>
+    <span id="pdf-status"></span>
+  </section>
 
-  <div id="pdf-status"></div>
-  <button onclick="applyOcrSuggestion()">📄 Usar OCR para sugerir camadas</button>
-
+  <!-- Seção Tabelas -->
   <section>
-    
-    <h2>Location Details</h2>
+    <h2>Dados de Localização</h2>
     <table id="location-table">
       <thead>
         <tr>
-          <th>Location ID*</th>
-          <th>East*</th>
-          <th>North*</th>
-          <th>Ground Level*</th>
-          <th>Final Depth*</th>
-          <th></th>
+          <th>Location ID</th>
+          <th>East (X)</th>
+          <th>North (Y)</th>
+          <th>Ground Level (Z)</th>
+          <th>Final Depth</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <tr>
+          <td><input value="BH-01"></td>
+          <td><input></td>
+          <td><input></td>
+          <td><input></td>
+          <td><input></td>
+        </tr>
+      </tbody>
     </table>
-    <button onclick="addLocationRow()">➕ Adicionar sondagem</button>
-  </section>
 
-  <section>
-    <h2>Field Geological Descriptions</h2>
+    <h2>Dados Geológicos</h2>
     <table id="geology-table">
       <thead>
         <tr>
-          <th>Location ID*</th>
-          <th>Depth Top*</th>
-          <th>Depth Base*</th>
-          <th>Geology Code*</th>
+          <th>Location ID</th>
+          <th>Depth Top</th>
+          <th>Depth Base</th>
+          <th>Geology Code</th>
           <th>Description</th>
-          <th></th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <tr>
+          <td><input value="BH-01"></td>
+          <td><input></td>
+          <td><input></td>
+          <td><input></td>
+          <td><input></td>
+        </tr>
+      </tbody>
     </table>
-    <button onclick="addGeologyRow()">➕ Adicionar camada</button>
+
+    <button class="btn" onclick="applyOcrSuggestion()">Aplicar sugestão OCR</button>
+    <button class="btn" onclick="validateData()">Validar dados</button>
+    <button class="btn" onclick="exportCSV()">Exportar CSV Civil 3D</button>
   </section>
 
+  <!-- Output JSON -->
   <section>
-    <button onclick="validateData()">✅ Validar dados</button>
-    <button onclick="exportCSV()">⬇️ Exportar CSV (Civil 3D)</button>
+    <h2>Output / Logs</h2>
+    <pre id="output">Nenhuma ação realizada ainda.</pre>
   </section>
 
-  <pre id="output"></pre>
+  <footer>
+    &copy; 2026 GeoCSV Bridge • Desenvolvido por João Claudiano
+  </footer>
 
-  <script src="scripts/api.js"></script>
-  <script src="scripts/table-location.js"></script>
-  <script src="scripts/table-geology.js"></script>
-  <script src="scripts/app.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Toggle dark mode
+    const toggleBtn = document.getElementById("dark-mode-toggle");
+    toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      toggleBtn.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
+    });
+
+    // Função para adicionar linha geologia
+    function addGeologyRow() {
+      const tbody = document.querySelector("#geology-table tbody");
+      const row = tbody.insertRow();
+      for (let i = 0; i < 5; i++) {
+        const cell = row.insertCell();
+        const input = document.createElement("input");
+        cell.appendChild(input);
+      }
+    }
+
+    // Função para adicionar linha de localização (opcional)
+    function addLocationRow() {
+      const tbody = document.querySelector("#location-table tbody");
+      const row = tbody.insertRow();
+      for (let i = 0; i < 5; i++) {
+        const cell = row.insertCell();
+        const input = document.createElement("input");
+        cell.appendChild(input);
+      }
+    }
+  </script>
 </body>
 </html>
