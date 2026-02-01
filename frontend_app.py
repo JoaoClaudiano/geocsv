@@ -5,6 +5,7 @@ import pytesseract
 from pdf2image import convert_from_bytes
 from io import BytesIO, StringIO
 import camelot
+import os
 
 # -------------------------------
 # Configuração da página
@@ -107,7 +108,9 @@ if "locations_df" not in st.session_state:
     st.session_state["locations_df"] = pd.DataFrame(
         columns=["location_id", "east", "north", "ground_level", "final_depth"]
     )
-locations_df = st.experimental_data_editor(
+
+# Atualização necessária para Streamlit recente
+locations_df = st.data_editor(
     st.session_state["locations_df"], num_rows="dynamic"
 )
 st.session_state["locations_df"] = locations_df
@@ -118,6 +121,7 @@ if "geology_df" not in st.session_state:
     st.session_state["geology_df"] = pd.DataFrame(
         columns=["location_id", "depth_top", "depth_base", "geology_code", "description"]
     )
+
 # Preenche com sugestões
 if suggested_layers and st.button("Adicionar sugestões à tabela"):
     for layer in suggested_layers:
@@ -125,7 +129,7 @@ if suggested_layers and st.button("Adicionar sugestões à tabela"):
             st.session_state["geology_df"], pd.DataFrame([layer])
         ], ignore_index=True)
 
-geology_df = st.experimental_data_editor(
+geology_df = st.data_editor(
     st.session_state["geology_df"], num_rows="dynamic"
 )
 st.session_state["geology_df"] = geology_df
