@@ -22,10 +22,17 @@ All steps from the problem statement have been successfully completed:
 The only remaining step is to push the `gh-pages` branch to GitHub. Due to authentication restrictions in this environment, this needs to be done manually:
 
 ```bash
+# Make sure you're on the gh-pages branch
+git checkout gh-pages
+
+# Push the branch to GitHub
 git push origin gh-pages
 ```
 
-Once pushed, GitHub Pages can be configured in the repository settings to serve from the `gh-pages` branch.
+Once pushed, GitHub Pages can be configured in the repository settings:
+1. Go to Settings → Pages
+2. Select the `gh-pages` branch as the source
+3. The frontend will be available at `https://<username>.github.io/geocsv/`
 
 ## File Structure in gh-pages Branch
 
