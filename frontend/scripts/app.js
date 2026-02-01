@@ -60,5 +60,20 @@ async function uploadPDF() {
     JSON.stringify(data, null, 2);
 }
 
+async function applySuggestion(table) {
+  const response = await postData("/suggest/from-table", table);
 
+  response.suggested_layers.forEach(layer => {
+    addGeologyRow();
+    const row = document.querySelector(
+      "#geology-table tbody tr:last-child"
+    );
+    const inputs = row.querySelectorAll("input, select");
+
+    inputs[0].value = layer.location_id;
+    inputs[1].value = layer.depth_top;
+    inputs[2].value = layer.depth_base;
+    inputs[4].value = layer.description;
+  });
+}
 
