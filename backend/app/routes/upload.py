@@ -1,7 +1,7 @@
 import tempfile
 from fastapi import APIRouter, UploadFile, File
 
-from app.services.pdf_reader import extract_text
+from app.services.pdf_dispatcher import read_pdf_smart
 from app.services.table_parser import extract_tables
 
 router = APIRouter(prefix="/upload", tags=["PDF Upload"])
@@ -16,11 +16,15 @@ async def upload_pdf(file: UploadFile = File(...)):
         tmp.write(content)
         tmp_path = tmp.name
 
-    text_data = extract_text(tmp_path)
-    table_data = extract_tables(tmp_path)
+    text_data = read_pdf_smart(tmp_path)
+
+    tables = []
+    if text_data.get("source") == "vector":
+        tables = extract_tables(tmp_path)
 
     return {
         "filename": file.filename,
+        "source": text_data.get("source"),
         "text_preview": text_data,
-        "tables": table_data
+        "tables": tables
     }
