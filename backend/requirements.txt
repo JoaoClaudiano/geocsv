@@ -5,5 +5,5 @@ python-multipart
 pdfplumber
 camelot-py
 pytesseract
-pdf2image
-Pillow
+pdf2image==1.16.0
+Pillow>=9.0.0
