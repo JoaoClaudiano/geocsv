@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Geo CSV Bridge</title>
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+
+  <h1>Geo CSV Bridge</h1>
+  <p>Inserção manual de dados geotécnicos (Civil 3D)</p>
+
+  <section>
+    <h2>Location Details</h2>
+    <table id="location-table">
+      <thead>
+        <tr>
+          <th>Location ID*</th>
+          <th>East*</th>
+          <th>North*</th>
+          <th>Ground Level*</th>
+          <th>Final Depth*</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="addLocationRow()">➕ Adicionar sondagem</button>
+  </section>
+
+  <section>
+    <h2>Field Geological Descriptions</h2>
+    <table id="geology-table">
+      <thead>
+        <tr>
+          <th>Location ID*</th>
+          <th>Depth Top*</th>
+          <th>Depth Base*</th>
+          <th>Geology Code*</th>
+          <th>Description</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="addGeologyRow()">➕ Adicionar camada</button>
+  </section>
+
+  <section>
+    <button onclick="validateData()">✅ Validar dados</button>
+    <button onclick="exportCSV()">⬇️ Exportar CSV (Civil 3D)</button>
+  </section>
+
+  <pre id="output"></pre>
+
+  <script src="scripts/api.js"></script>
+  <script src="scripts/table-location.js"></script>
+  <script src="scripts/table-geology.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+</html>
