@@ -1,4 +1,3 @@
-[server]
-headless = true
-enableCORS = false
-port = $PORT
+import os
+port = int(os.environ.get("PORT", 8501))
+st.run(port=port)
