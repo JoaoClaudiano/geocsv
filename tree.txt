@@ -1,0 +1,47 @@
+geo-csv-bridge/
+│
+├── frontend/
+│   ├── index.html
+│   ├── styles/
+│   │   └── main.css
+│   ├── scripts/
+│   │   ├── app.js
+│   │   ├── table-location.js
+│   │   ├── table-geology.js
+│   │   └── validators.js
+│   ├── pwa/
+│   │   ├── manifest.json
+│   │   └── service-worker.js
+│   └── assets/
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py          # FastAPI
+│   │   ├── routes/
+│   │   │   ├── upload.py
+│   │   │   ├── parse.py
+│   │   │   └── export.py
+│   │   ├── services/
+│   │   │   ├── pdf_reader.py
+│   │   │   ├── table_parser.py
+│   │   │   ├── ocr.py
+│   │   │   └── geology_mapper.py
+│   │   ├── models/
+│   │   │   ├── location.py
+│   │   │   └── geology.py
+│   │   └── validators/
+│   │       ├── location_validator.py
+│   │       └── geology_validator.py
+│   │
+│   └── requirements.txt
+│
+├── templates/
+│   ├── Location Details.csv
+│   └── Field Geological Descriptions.csv
+│
+├── docs/
+│   ├── civil3d_format.md
+│   ├── assumptions.md
+│   └── limitations.md
+│
+└── README.md
