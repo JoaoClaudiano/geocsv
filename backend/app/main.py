@@ -6,6 +6,9 @@ app.include_router(parse.router)
 from app.routes import upload
 app.include_router(upload.router)
 
+from app.routes import ocr_suggest
+app.include_router(ocr_suggest.router)
+
 app = FastAPI(
     title="Geo CSV",
     description="Conversor de relatórios geotécnicos PDF para CSV compatível com Autodesk Civil 3D",
