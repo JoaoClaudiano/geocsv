@@ -5,91 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GeoCSV Bridge — Civil 3D</title>
   <link rel="stylesheet" href="style/main.css">
-  <style>
-    /* Header e Footer */
-    header, footer {
-      text-align: center;
-      padding: 1rem;
-      background-color: #f3f3f3;
-      margin-bottom: 1rem;
-    }
-    footer {
-      font-size: 0.85rem;
-      color: #555;
-      margin-top: 2rem;
-    }
-
-    /* Dark mode */
-    body.dark-mode {
-      background-color: #1e1e1e;
-      color: #f3f3f3;
-    }
-    body.dark-mode table th {
-      background-color: #333;
-    }
-    body.dark-mode table td, body.dark-mode table th {
-      border-color: #555;
-    }
-    body.dark-mode input {
-      background-color: #2e2e2e;
-      color: #f3f3f3;
-    }
-    body.dark-mode button {
-      background-color: #555;
-      color: #f3f3f3;
-      border: none;
-    }
-
-    /* Botões principais */
-    .btn {
-      margin: 0.5rem 0.5rem 1rem 0;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      background-color: #f3f3f3;
-      transition: 0.2s;
-    }
-    .btn:hover {
-      background-color: #ddd;
-    }
-
-    /* Output JSON */
-    #output {
-      white-space: pre-wrap;
-      background: #f9f9f9;
-      padding: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-top: 1rem;
-    }
-
-    /* Dark mode toggle */
-    #dark-mode-toggle {
-      float: right;
-      padding: 0.3rem 0.6rem;
-      font-size: 0.9rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-
-    h2 {
-      margin-top: 2rem;
-    }
-
-  </style>
+  <link rel="icon" href="favicon.ico">
 </head>
 <body>
 
+  <!-- ================= Header ================= -->
   <header>
     <h1>GeoCSV Bridge</h1>
     <p>Converter PDFs geotécnicos para CSV compatível com Civil 3D</p>
     <button id="dark-mode-toggle">Dark Mode</button>
   </header>
 
-  <!-- Seção PDF Upload -->
+  <!-- ================= PDF Upload ================= -->
   <section>
     <h2>Upload de PDF</h2>
     <input type="file" id="pdf-input" accept="application/pdf">
@@ -97,9 +24,10 @@
     <span id="pdf-status"></span>
   </section>
 
-  <!-- Seção Tabelas -->
+  <!-- ================= Tabelas ================= -->
   <section>
     <h2>Dados de Localização</h2>
+    <button class="btn" onclick="addLocationRow()">Adicionar linha</button>
     <table id="location-table">
       <thead>
         <tr>
@@ -122,6 +50,7 @@
     </table>
 
     <h2>Dados Geológicos</h2>
+    <button class="btn" onclick="addGeologyRow()">Adicionar linha</button>
     <table id="geology-table">
       <thead>
         <tr>
@@ -143,21 +72,24 @@
       </tbody>
     </table>
 
+    <!-- Botões de ações -->
     <button class="btn" onclick="applyOcrSuggestion()">Aplicar sugestão OCR</button>
     <button class="btn" onclick="validateData()">Validar dados</button>
     <button class="btn" onclick="exportCSV()">Exportar CSV Civil 3D</button>
   </section>
 
-  <!-- Output JSON -->
+  <!-- ================= Output JSON ================= -->
   <section>
     <h2>Output / Logs</h2>
     <pre id="output">Nenhuma ação realizada ainda.</pre>
   </section>
 
+  <!-- ================= Footer ================= -->
   <footer>
     &copy; 2026 GeoCSV Bridge • Desenvolvido por João Claudiano
   </footer>
 
+  <!-- ================= Scripts ================= -->
   <script src="app.js"></script>
   <script>
     // Toggle dark mode
@@ -178,7 +110,7 @@
       }
     }
 
-    // Função para adicionar linha de localização (opcional)
+    // Função para adicionar linha de localização
     function addLocationRow() {
       const tbody = document.querySelector("#location-table tbody");
       const row = tbody.insertRow();
