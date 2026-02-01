@@ -38,3 +38,27 @@ function downloadFile(filename, content) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+async function uploadPDF() {
+  const input = document.getElementById("pdf-input");
+  if (!input.files.length) {
+    alert("Selecione um PDF");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", input.files[0]);
+
+  const response = await fetch(`${API_URL}/upload/pdf`, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await response.json();
+
+  document.getElementById("output").textContent =
+    JSON.stringify(data, null, 2);
+}
+
+
+
