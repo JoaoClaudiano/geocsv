@@ -1,18 +1,32 @@
-// ===============================================
-// app.js — frontend para GeoCSV Bridge
-// ===============================================
+// URL do backend no Streamlit Cloud
+const API_URL = "https://geocsv.streamlit.app";
 
-// URL do backend (local para testes)
-const API_URL = "http://localhost:8000";
+// ----------------- Funções utilitárias -----------------
+async function postData(endpoint, data) {
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
 
-// ===============================================
-// Funções auxiliares
-// ===============================================
+    if (!response.ok) {
+      throw new Error(`Erro HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error(`Erro ao enviar para ${endpoint}:`, err);
+    alert(`Erro ao enviar para ${endpoint}: ${err}`);
+  }
+}
 
 function getLocationData() {
   const rows = document.querySelectorAll("#location-table tbody tr");
   return Array.from(rows).map(row => {
-    const inputs = row.querySelectorAll("input, select");
+    const inputs = row.querySelectorAll("input");
     return {
       location_id: inputs[0].value,
       east: inputs[1].value,
@@ -37,21 +51,6 @@ function getGeologyData() {
   });
 }
 
-async function postData(endpoint, payload) {
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) throw new Error("Erro na requisição");
-    return await response.json();
-  } catch (err) {
-    console.error(err);
-    alert("Erro na comunicação com o backend. Veja o console.");
-  }
-}
-
 function downloadFile(filename, content) {
   const blob = new Blob([content], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -62,41 +61,7 @@ function downloadFile(filename, content) {
   URL.revokeObjectURL(url);
 }
 
-// ===============================================
-// Validação e exportação CSV
-// ===============================================
-
-async function validateData() {
-  const locations = getLocationData();
-  const layers = getGeologyData();
-
-  const result = await postData("/data/validate", { locations, layers });
-  document.getElementById("output").textContent =
-    JSON.stringify(result, null, 2);
-}
-
-async function exportCSV() {
-  const locations = getLocationData();
-  const layers = getGeologyData();
-
-  const result = await postData("/export/civil3d", { locations, layers });
-
-  if (!result) return;
-
-  document.getElementById("output").textContent =
-    "CSV gerados com sucesso!";
-
-  downloadFile("Location Details.csv", result["Location Details.csv"]);
-  downloadFile(
-    "Field Geological Descriptions.csv",
-    result["Field Geological Descriptions.csv"]
-  );
-}
-
-// ===============================================
-// Upload PDF e OCR
-// ===============================================
-
+// ----------------- Função upload PDF -----------------
 async function uploadPDF() {
   const input = document.getElementById("pdf-input");
   if (!input.files.length) {
@@ -113,34 +78,26 @@ async function uploadPDF() {
       body: formData
     });
 
-    if (!response.ok) throw new Error("Erro no upload do PDF");
+    if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
 
     const data = await response.json();
+    window.lastPdfText = data.text_preview; // salva para sugestão OCR
 
-    // salvar globalmente para sugestões OCR
-    window.lastPdfText = data.text_preview;
-
-    // atualizar status
     document.getElementById("pdf-status").innerText =
       `Fonte do PDF: ${data.source === "ocr" ? "PDF escaneado (OCR)" : "PDF vetorial"}`;
 
-    // mostrar preview das duas primeiras páginas
     document.getElementById("output").textContent =
       JSON.stringify(data.text_preview.pages.slice(0, 2), null, 2);
-
-  } catch (error) {
-    console.error("Erro ao enviar PDF:", error);
-    alert("Erro ao enviar PDF. Veja o console.");
+  } catch (err) {
+    console.error("Erro ao enviar PDF:", err);
+    alert(`Erro ao enviar PDF: ${err}`);
   }
 }
 
-// ===============================================
-// Aplicar sugestões do OCR
-// ===============================================
-
+// ----------------- Aplicar sugestão OCR -----------------
 async function applyOcrSuggestion() {
   if (!window.lastPdfText) {
-    alert("Nenhum PDF OCR carregado");
+    alert("Nenhum PDF carregado");
     return;
   }
 
@@ -148,38 +105,65 @@ async function applyOcrSuggestion() {
   if (!response) return;
 
   response.suggested_layers.forEach(layer => {
-    addGeologyRow(); // função já existente para adicionar linha
-    const row = document.querySelector("#geology-table tbody tr:last-child");
-    const inputs = row.querySelectorAll("input, select");
-
-    inputs[0].value = layer.location_id;
-    inputs[1].value = layer.depth_top;
-    inputs[2].value = layer.depth_base;
-    inputs[3].value = layer.geology_code;
-    inputs[4].value = layer.description;
-  });
-}
-
-// ===============================================
-// Aplicar sugestões manuais de tabela
-// ===============================================
-
-async function applySuggestion(table) {
-  const response = await postData("/suggest/from-table", table);
-  if (!response) return;
-
-  response.suggested_layers.forEach(layer => {
     addGeologyRow();
     const row = document.querySelector("#geology-table tbody tr:last-child");
     const inputs = row.querySelectorAll("input, select");
 
-    inputs[0].value = layer.location_id;
-    inputs[1].value = layer.depth_top;
-    inputs[2].value = layer.depth_base;
-    inputs[3].value = layer.geology_code;
-    inputs[4].value = layer.description;
+    inputs[0].value = layer.location_id || "";
+    inputs[1].value = layer.depth_top || "";
+    inputs[2].value = layer.depth_base || "";
+    inputs[3].value = layer.geology_code || "";
+    inputs[4].value = layer.description || "";
   });
 }
 
+// ----------------- Validar dados -----------------
+async function validateData() {
+  const locations = getLocationData();
+  const layers = getGeologyData();
 
+  const result = await postData("/data/validate", { locations, layers });
+  document.getElementById("output").textContent = JSON.stringify(result, null, 2);
+}
 
+// ----------------- Exportar CSV -----------------
+async function exportCSV() {
+  const locations = getLocationData();
+  const layers = getGeologyData();
+
+  const result = await postData("/export/civil3d", { locations, layers });
+  if (!result) return;
+
+  downloadFile("Location Details.csv", result["Location Details.csv"]);
+  downloadFile("Field Geological Descriptions.csv", result["Field Geological Descriptions.csv"]);
+
+  document.getElementById("output").textContent = "CSV gerados com sucesso!";
+}
+
+// ----------------- Adicionar linhas -----------------
+function addGeologyRow() {
+  const tbody = document.querySelector("#geology-table tbody");
+  const row = tbody.insertRow();
+  for (let i = 0; i < 5; i++) {
+    const cell = row.insertCell();
+    const input = document.createElement("input");
+    cell.appendChild(input);
+  }
+}
+
+function addLocationRow() {
+  const tbody = document.querySelector("#location-table tbody");
+  const row = tbody.insertRow();
+  for (let i = 0; i < 5; i++) {
+    const cell = row.insertCell();
+    const input = document.createElement("input");
+    cell.appendChild(input);
+  }
+}
+
+// ----------------- Dark Mode -----------------
+const toggleBtn = document.getElementById("dark-mode-toggle");
+toggleBtn.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  toggleBtn.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
+});
