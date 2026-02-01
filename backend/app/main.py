@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes import parse
+
+app.include_router(parse.router)
 
 app = FastAPI(
     title="Geo CSV",
