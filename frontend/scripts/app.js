@@ -77,3 +77,26 @@ async function applySuggestion(table) {
   });
 }
 
+async function uploadPDF() {
+  const input = document.getElementById("pdf-input");
+  if (!input.files.length) return;
+
+  const formData = new FormData();
+  formData.append("file", input.files[0]);
+
+  const response = await fetch(`${API_URL}/upload/pdf`, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await response.json();
+
+  document.getElementById("pdf-status").innerText =
+    `Fonte do PDF: ${data.source === "ocr" ? "PDF escaneado (OCR)" : "PDF vetorial"}`;
+
+  document.getElementById("output").textContent =
+    JSON.stringify(data.text_preview.pages.slice(0, 2), null, 2);
+}
+
+
+
