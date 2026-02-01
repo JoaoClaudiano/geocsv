@@ -6,7 +6,6 @@ from pdf2image import convert_from_bytes
 from io import BytesIO
 import camelot
 import re
-import os
 
 # -------------------------------
 # Configuração da página
@@ -41,8 +40,6 @@ st.subheader("1️⃣ Upload do PDF")
 uploaded_file = st.file_uploader("Selecione o arquivo PDF", type="pdf")
 
 pdf_text_preview = None
-locations_df = None
-geology_df = None
 
 def extract_text(pdf_bytes):
     """Tenta ler texto vetorial; se vazio, aplica OCR."""
@@ -60,44 +57,50 @@ def extract_text(pdf_bytes):
         ocr_pages.append(pytesseract.image_to_string(img))
     return "ocr", ocr_pages
 
-def extract_tables(pdf_bytes):
-    """Tenta extrair tabelas com Camelot."""
-    try:
-        tables = camelot.read_pdf(BytesIO(pdf_bytes), pages='all', flavor='stream')
-        return tables
-    except Exception as e:
-        st.warning(f"Erro ao extrair tabelas com Camelot: {e}")
-        return []
+def parse_pdf_to_tables(pdf_text_pages):
+    """
+    Extrai locations e geologia, separando por location_id.
+    """
+    locations = []
+    geologies = []
 
-def parse_locations_from_text(text):
-    """Regex para extrair localização: ID, East, North"""
-    matches = re.findall(r"(SP-\d+).*?E[:\s]+([\d.,]+).*?N[:\s]+([\d.,]+)", text, re.DOTALL)
-    locs = []
-    for m in matches:
-        locs.append({
-            "location_id": m[0],
-            "east": float(m[1].replace(",", ".")),
-            "north": float(m[2].replace(",", "."))
+    combined_text = "\n".join(pdf_text_pages)
+
+    # Detecta blocos de sondagem
+    sondagem_blocks = re.split(r"(SP-\d+)", combined_text)
+    # o split retorna ['', 'SP-04', ' conteúdo ', 'SP-05', ' conteúdo ', ...]
+    for i in range(1, len(sondagem_blocks), 2):
+        location_id = sondagem_blocks[i].strip()
+        content = sondagem_blocks[i+1].strip()
+
+        # Extrai coordenadas (E e N)
+        coord_match = re.search(r"E[:\s]+([\d.,]+).*?N[:\s]+([\d.,]+)", content, re.DOTALL)
+        east = float(coord_match.group(1).replace(",", ".")) if coord_match else None
+        north = float(coord_match.group(2).replace(",", ".")) if coord_match else None
+        locations.append({
+            "location_id": location_id,
+            "east": east,
+            "north": north,
+            "ground_level": None,
+            "final_depth": None
         })
-    return pd.DataFrame(locs)
 
-def parse_geology_from_text(text):
-    """Regex para extrair profundidade e descrição geológica"""
-    # Exemplo simplificado: linhas com profundidade top/base + descrição
-    matches = re.findall(r"([\d.,]+)[\s-]+([\d.,]+)[\s-]+([A-Z ,]+)", text)
-    layers = []
-    for m in matches:
-        try:
-            layers.append({
-                "location_id": "BH-01",  # Default, ajuste se houver IDs por linha
-                "depth_top": float(m[0].replace(",", ".")),
-                "depth_base": float(m[1].replace(",", ".")),
-                "geology_code": "",
-                "description": m[2].strip()
-            })
-        except:
-            continue
-    return pd.DataFrame(layers)
+        # Extrai camadas geológicas
+        # Exemplo: linhas com profundidade top/base e descrição
+        layer_matches = re.findall(r"([\d.,]+)\s*-\s*([\d.,]+)\s*-\s*(.*)", content)
+        for lm in layer_matches:
+            try:
+                geologies.append({
+                    "location_id": location_id,
+                    "depth_top": float(lm[0].replace(",", ".")),
+                    "depth_base": float(lm[1].replace(",", ".")),
+                    "geology_code": "",
+                    "description": lm[2].strip()
+                })
+            except:
+                continue
+
+    return pd.DataFrame(locations), pd.DataFrame(geologies)
 
 if uploaded_file:
     with st.spinner("Processando PDF..."):
@@ -105,26 +108,27 @@ if uploaded_file:
         source_type, pdf_text_preview = extract_text(pdf_bytes)
         st.success(f"PDF processado! Tipo: {source_type.upper()}")
 
-        # -------------------------------
-        # 2️⃣ Extrair tabelas automaticamente
-        tables = extract_tables(pdf_bytes)
-        if tables:
-            st.info(f"{len(tables)} tabela(s) detectada(s) via Camelot")
-            # Preenche a tabela de geologia com a primeira tabela detectada
-            geology_df = tables[0].df.copy()
-            # Apenas headers conhecidos
-            geology_df.columns = ["location_id", "depth_top", "depth_base", "geology_code", "description"]
-        else:
-            st.info("Nenhuma tabela detectada, usando parsing de texto...")
-            combined_text = "\n".join(pdf_text_preview)
-            locations_df = parse_locations_from_text(combined_text)
-            geology_df = parse_geology_from_text(combined_text)
+        # Tenta camelot se PDF for vetorial
+        locations_df = None
+        geology_df = None
+        if source_type == "vetorial":
+            try:
+                tables = camelot.read_pdf(BytesIO(pdf_bytes), pages='all', flavor='stream')
+                if tables:
+                    st.info(f"{len(tables)} tabela(s) detectada(s) via Camelot")
+                    # Aqui você pode escolher a primeira tabela ou implementar lógica para várias
+                    table = tables[0].df
+                    table.columns = ["location_id", "depth_top", "depth_base", "geology_code", "description"]
+                    geology_df = table
+            except:
+                st.warning("Falha ao extrair tabela com Camelot, usando parsing de texto.")
 
-        # Armazena no session_state
-        if locations_df is not None:
-            st.session_state["locations_df"] = locations_df
-        if geology_df is not None:
-            st.session_state["geology_df"] = geology_df
+        if geology_df is None:
+            # Fallback para parsing de texto
+            locations_df, geology_df = parse_pdf_to_tables(pdf_text_preview)
+
+        st.session_state["locations_df"] = locations_df
+        st.session_state["geology_df"] = geology_df
 
 # -------------------------------
 # 3️⃣ Tabelas editáveis
